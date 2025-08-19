@@ -29,9 +29,11 @@ import org.apache.poi.ss.usermodel.*;
 
 
 public class TransferCertificateForm extends JFrame {
-    private static final String DB_URL = "jdbc:mysql://localhost:3310/college";
-    private static final String DB_USERNAME = "root";
-    private static final String DB_PASSWORD = "sair2005@RDS";
+    // ✅ Correct SQLite JDBC URL
+    private static final String DB_URL = "jdbc:sqlite:college.db";
+    // SQLite doesn’t need username/password
+    private static final String DB_USERNAME = "";
+    private static final String DB_PASSWORD = "";
     
     private JTextField studentNameField, registerNoField, serialNoField, fatherNameField,
             dobField, dobWordsField, nationalityField, religionField, casteField, 
@@ -59,34 +61,36 @@ public class TransferCertificateForm extends JFrame {
 
     private void initializeDatabase() {
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+            // ✅ SQLite JDBC driver
+            Class.forName("org.sqlite.JDBC");
+            Connection conn = DriverManager.getConnection(DB_URL);
+
             String createTableSQL = "CREATE TABLE IF NOT EXISTS transfer_certificates (" +
-                "id INT AUTO_INCREMENT PRIMARY KEY," +
-                "student_name VARCHAR(255)," +
-                "register_no VARCHAR(100)," +
-                "serial_no VARCHAR(100)," +
-                "father_name VARCHAR(255)," +
-                "dob VARCHAR(50)," +
-                "dob_words VARCHAR(500)," +
-                "nationality VARCHAR(100)," +
-                "religion VARCHAR(100)," +
-                "caste VARCHAR(100)," +
-                "gender VARCHAR(20)," +
-                "admission_date VARCHAR(50)," +
-                "course VARCHAR(255)," +
-                "games VARCHAR(255)," +
-                "ncc VARCHAR(255)," +
-                "fee_concession VARCHAR(255)," +
-                "result VARCHAR(255)," +
-                "leaving_date VARCHAR(50)," +
-                "class_leaving VARCHAR(100)," +
-                "qualified VARCHAR(255)," +
-                "reason VARCHAR(500)," +
-                "issue_date VARCHAR(50)," +
-                "conduct VARCHAR(500)," +
-                "remarks VARCHAR(500)," +
-                "umis_no VARCHAR(100)," +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "student_name TEXT," +
+                "register_no TEXT," +
+                "serial_no TEXT," +
+                "father_name TEXT," +
+                "dob TEXT," +
+                "dob_words TEXT," +
+                "nationality TEXT," +
+                "religion TEXT," +
+                "caste TEXT," +
+                "gender TEXT," +
+                "admission_date TEXT," +
+                "course TEXT," +
+                "games TEXT," +
+                "ncc TEXT," +
+                "fee_concession TEXT," +
+                "result TEXT," +
+                "leaving_date TEXT," +
+                "class_leaving TEXT," +
+                "qualified TEXT," +
+                "reason TEXT," +
+                "issue_date TEXT," +
+                "conduct TEXT," +
+                "remarks TEXT," +
+                "umis_no TEXT," +
                 "created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
                 ")";
             
@@ -94,13 +98,15 @@ public class TransferCertificateForm extends JFrame {
             stmt.execute(createTableSQL);
             stmt.close();
             conn.close();
-            System.out.println("Database initialized successfully");
+            System.out.println("SQLite Database initialized successfully");
         } catch (Exception e) {
             System.err.println("Database initialization failed: " + e.getMessage());
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Database initialization failed: " + e.getMessage());
         }
     }
+
+
 
     private void setupGUI() {
         setTitle("CCET Transfer Certificate Generator");
@@ -435,7 +441,7 @@ public class TransferCertificateForm extends JFrame {
             progressBar.setVisible(true);
             progressBar.setIndeterminate(true);
             
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName("org.sqlite.JDBC");
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             String sql = "SELECT DISTINCT student_name FROM transfer_certificates WHERE " +
                 "student_name LIKE ? OR register_no LIKE ? OR father_name LIKE ? " +
@@ -485,7 +491,7 @@ public class TransferCertificateForm extends JFrame {
         
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                Class.forName("com.mysql.cj.jdbc.Driver");
+                Class.forName("org.sqlite.JDBC");
                 Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
                 String sql = "DELETE FROM transfer_certificates WHERE student_name = ?";
                 PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -617,7 +623,7 @@ public class TransferCertificateForm extends JFrame {
         studentList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName("org.sqlite.JDBC");
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             String sql = "SELECT DISTINCT student_name FROM transfer_certificates ORDER BY student_name";
             Statement stmt = conn.createStatement();
@@ -705,7 +711,7 @@ public class TransferCertificateForm extends JFrame {
 
     private void loadStudentData(String studentName) {
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName("org.sqlite.JDBC");
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             String sql = "SELECT * FROM transfer_certificates WHERE student_name = ? ORDER BY id DESC LIMIT 1";
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -924,7 +930,7 @@ public class TransferCertificateForm extends JFrame {
                 return false; // Skip empty rows
             }
 
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName("org.sqlite.JDBC");
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             String sql = "INSERT INTO transfer_certificates " +
                 "(student_name, register_no, serial_no, father_name, dob, dob_words, nationality, " +
@@ -992,7 +998,7 @@ public class TransferCertificateForm extends JFrame {
         }
         
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName("org.sqlite.JDBC");
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             String sql = "INSERT INTO transfer_certificates " +
                 "(student_name, register_no, serial_no, father_name, dob, dob_words, nationality, " +
@@ -1053,7 +1059,7 @@ public class TransferCertificateForm extends JFrame {
         if (selectedStudent == null || selectedStudent.equals("Select Student")) return;
 
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName("org.sqlite.JDBC");
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             String sql = "SELECT * FROM transfer_certificates WHERE student_name = ? ORDER BY id DESC LIMIT 1";
             PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -1102,7 +1108,7 @@ public class TransferCertificateForm extends JFrame {
         studentSelector.addItem("Select Student");
         
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName("org.sqlite.JDBC");
             Connection conn = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             String sql = "SELECT DISTINCT student_name FROM transfer_certificates WHERE student_name IS NOT NULL AND student_name != '' ORDER BY student_name";
             Statement stmt = conn.createStatement();

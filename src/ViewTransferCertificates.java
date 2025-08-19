@@ -486,87 +486,93 @@ private Color darkenColor(Color color, float factor) {
         });
     }
 
-    // Fixed loadData method to handle string dates properly
-    private void loadData() {
-        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-            @Override
-            protected Void doInBackground() throws Exception {
-                SwingUtilities.invokeLater(() -> {
-                    updateStatus("Loading data...");
-                    progressBar.setVisible(true);
-                    progressBar.setIndeterminate(true);
-                });
-                
-                try {
-                    Connection conn = DriverManager.getConnection(
-                        "jdbc:mysql://localhost:3310/college", "root", "sair2005@RDS");
-                    Statement stmt = conn.createStatement();
-                    
-                    // Updated SQL query - treating all dates as strings initially
-                    String query = "SELECT id, student_name, register_no, serial_no, father_name, " +
-    "dob, dob_words, nationality, religion, caste, gender, " +
-    "admission_date, course, games, fee_concession, result, " +
-    "leaving_date, class_leaving, qualified, reason, " +
-    "issue_date, conduct, remarks, umis_no " +
-    "FROM transfer_certificates ORDER BY id DESC";
+  // Fixed loadData method for SQLite
+private void loadData() {
+    SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+        @Override
+        protected Void doInBackground() throws Exception {
+            SwingUtilities.invokeLater(() -> {
+                updateStatus("Loading data...");
+                progressBar.setVisible(true);
+                progressBar.setIndeterminate(true);
+            });
 
-ResultSet rs = stmt.executeQuery(query);
+            try {
+                // SQLite connection (DB file same folder la irukkum)
+                Connection conn = DriverManager.getConnection("jdbc:sqlite:college.db");
+                Statement stmt = conn.createStatement();
 
-SwingUtilities.invokeLater(() -> model.setRowCount(0));
+                // Query: must match SQLite table columns
+                String query = "SELECT id, student_name, register_no, serial_no, father_name, " +
+                        "dob, dob_words, nationality, religion, caste, gender, " +
+                        "admission_date, course, games, fee_concession, result, " +
+                        "leaving_date, class_leaving, qualified, reason, " +
+                        "issue_date, conduct, remarks, umis_no " +
+                        "FROM transfer_certificates ORDER BY id DESC";
 
-while (rs.next()) {
-    Object[] row = new Object[24];
-    row[0] = rs.getInt("id");
-    row[1] = rs.getString("student_name");
-    row[2] = rs.getString("register_no");
-    row[3] = rs.getString("serial_no");
-    row[4] = rs.getString("father_name");
-    row[5]  = formatDateString(rs.getString("dob"));
-    row[7] = rs.getString("nationality");
-    row[8] = rs.getString("religion");
-    row[9] = rs.getString("caste");
-    row[10] = rs.getString("gender");
-row[11] = formatDateString(rs.getString("admission_date"));
-    row[13] = rs.getString("games");
-    row[14] = rs.getString("fee_concession");
-    row[15] = rs.getString("result");
-row[16] = formatDateString(rs.getString("leaving_date"));
-    row[18] = rs.getString("qualified");
-    row[19] = rs.getString("reason");
-row[20] = formatDateString(rs.getString("issue_date"));
-    row[22] = rs.getString("remarks");
-    row[23] = rs.getString("umis_no");
-    SwingUtilities.invokeLater(() -> model.addRow(row));
+                ResultSet rs = stmt.executeQuery(query);
+
+                SwingUtilities.invokeLater(() -> model.setRowCount(0));
+
+                while (rs.next()) {
+                    Object[] row = new Object[24];
+                    row[0]  = rs.getInt("id");
+                    row[1]  = rs.getString("student_name");
+                    row[2]  = rs.getString("register_no");
+                    row[3]  = rs.getString("serial_no");
+                    row[4]  = rs.getString("father_name");
+                    row[5]  = formatDateString(rs.getString("dob"));
+                    row[6]  = rs.getString("dob_words");
+                    row[7]  = rs.getString("nationality");
+                    row[8]  = rs.getString("religion");
+                    row[9]  = rs.getString("caste");
+                    row[10] = rs.getString("gender");
+                    row[11] = formatDateString(rs.getString("admission_date"));
+                    row[12] = rs.getString("course");
+                    row[13] = rs.getString("games");
+                    row[14] = rs.getString("fee_concession");
+                    row[15] = rs.getString("result");
+                    row[16] = formatDateString(rs.getString("leaving_date"));
+                    row[17] = rs.getString("class_leaving");
+                    row[18] = rs.getString("qualified");
+                    row[19] = rs.getString("reason");
+                    row[20] = formatDateString(rs.getString("issue_date"));
+                    row[21] = rs.getString("conduct");
+                    row[22] = rs.getString("remarks");
+                    row[23] = rs.getString("umis_no");
+
+                    SwingUtilities.invokeLater(() -> model.addRow(row));
+                }
+
+                rs.close();
+                stmt.close();
+                conn.close();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                SwingUtilities.invokeLater(() ->
+                        JOptionPane.showMessageDialog(ViewTransferCertificates.this,
+                                "Error loading data: " + e.getMessage(), "Database Error",
+                                JOptionPane.ERROR_MESSAGE));
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            SwingUtilities.invokeLater(() -> {
+                progressBar.setVisible(false);
+                updateStatus("Data loaded successfully");
+                updateRecordCount();
+                updateButtonStates();
+            });
+        }
+    };
+
+    worker.execute();
 }
 
-                    rs.close();
-                    stmt.close();
-                    conn.close();
-                    
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    SwingUtilities.invokeLater(() -> 
-                        JOptionPane.showMessageDialog(ViewTransferCertificates.this, 
-                            "Error loading data: " + e.getMessage(), "Database Error", 
-                            JOptionPane.ERROR_MESSAGE));
-                }
-                
-                return null;
-            }
-            
-            @Override
-            protected void done() {
-                SwingUtilities.invokeLater(() -> {
-                    progressBar.setVisible(false);
-                    updateStatus("Data loaded successfully");
-                    updateRecordCount();
-                    updateButtonStates();
-                });
-            }
-        };
-        
-        worker.execute();
-    }
 
     // Helper method to format date strings
     private String formatDateString(String dateStr) {
@@ -666,43 +672,46 @@ row[20] = formatDateString(rs.getString("issue_date"));
         timer.start();
     }
 
-    private void deleteSelected() {
-        int[] selectedRows = table.getSelectedRows();
-        if (selectedRows.length == 0) {
-            JOptionPane.showMessageDialog(this, "Please select record(s) to delete.");
-            return;
-        }
-
-        int result = JOptionPane.showConfirmDialog(this,
-            String.format("Are you sure you want to delete %d record(s)?", selectedRows.length),
-            "Confirm Deletion", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        
-        if (result != JOptionPane.YES_OPTION) return;
-
-        try {
-            Connection conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3310/college", "root", "sair2005@RDS");
-            
-            PreparedStatement stmt = conn.prepareStatement("DELETE FROM transfer_certificates WHERE id = ?");
-            
-            for (int i = selectedRows.length - 1; i >= 0; i--) {
-                int modelRow = table.convertRowIndexToModel(selectedRows[i]);
-                int id = (int) model.getValueAt(modelRow, 0);
-                stmt.setInt(1, id);
-                stmt.executeUpdate();
-            }
-
-            stmt.close();
-            conn.close();
-            loadData();
-            updateStatus(String.format("%d record(s) deleted successfully", selectedRows.length));
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error deleting record(s): " + e.getMessage(),
-                "Database Error", JOptionPane.ERROR_MESSAGE);
-        }
+   private void deleteSelected() {
+    int[] selectedRows = table.getSelectedRows();
+    if (selectedRows.length == 0) {
+        JOptionPane.showMessageDialog(this, "Please select record(s) to delete.");
+        return;
     }
+
+    int result = JOptionPane.showConfirmDialog(this,
+        String.format("Are you sure you want to delete %d record(s)?", selectedRows.length),
+        "Confirm Deletion", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+    if (result != JOptionPane.YES_OPTION) return;
+
+    try {
+        // SQLite connection (no username/password required)
+        Connection conn = DriverManager.getConnection("jdbc:sqlite:college.db");
+
+        PreparedStatement stmt = conn.prepareStatement(
+            "DELETE FROM transfer_certificates WHERE id = ?");
+
+        for (int i = selectedRows.length - 1; i >= 0; i--) {
+            int modelRow = table.convertRowIndexToModel(selectedRows[i]);
+            int id = (int) model.getValueAt(modelRow, 0); // assumes 'id' is first column
+            stmt.setInt(1, id);
+            stmt.executeUpdate();
+        }
+
+        stmt.close();
+        conn.close();
+
+        loadData(); // reload table after deletion
+        updateStatus(String.format("%d record(s) deleted successfully", selectedRows.length));
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this,
+            "Error deleting record(s): " + e.getMessage(),
+            "Database Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
 
     // Enhanced PDF generation with all transfer certificate fields
     private void generateSelectedPDF() {
