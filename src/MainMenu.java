@@ -221,10 +221,11 @@ public class MainMenu extends JFrame {
         
         aboutMenuItem.addActionListener(e -> {
             JOptionPane.showMessageDialog(this,
-                "Transfer Certificate Management System\n" +
+                "CCET Transfer Certificate Management System\n" +
                 "Version 1.0\n" +
-                "Developed for educational institutions\n\n" +
-                "© 2024 TC Management System",
+                "Developed for TC Generating\n\n" +
+                "© 2025 Chendhuran College of Engineering and Technology\n" +
+                "All rights reserved.",
                 "About",
                 JOptionPane.INFORMATION_MESSAGE);
         });

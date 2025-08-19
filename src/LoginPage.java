@@ -224,7 +224,7 @@ public class LoginPage extends JFrame {
             loadingBar.setVisible(false);
             loginButton.setEnabled(true);
 
-            if (username.equals("admin") && password.equals("1234")) {
+            if (username.equals("admin") && password.equals("Ccet@9103")) {
                 showStatus("Login Successful! Welcome " + username, SUCCESS_COLOR);
                 Timer delay = new Timer(1000, evt -> {
                     dispose();
