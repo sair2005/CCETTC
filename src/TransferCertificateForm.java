@@ -1,3 +1,4 @@
+
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
@@ -9,6 +10,12 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.List;
+import com.itextpdf.text.Chunk;
+import com.itextpdf.text.DocumentException;
+
+
+
+// iText
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
@@ -17,16 +24,24 @@ import com.itextpdf.text.Image;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
-import java.awt.Color;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import com.itextpdf.text.Phrase;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
-import org.apache.poi.ss.usermodel.*;
+
+// Apache POI
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook; // for .xlsx
+import org.apache.poi.hssf.usermodel.HSSFWorkbook; // for .xls
+
+
 
 
 public class TransferCertificateForm extends JFrame {
@@ -36,7 +51,7 @@ public class TransferCertificateForm extends JFrame {
     private static final String DB_USERNAME = "";
     private static final String DB_PASSWORD = "";
     
-    private JTextField studentNameField, registerNoField, serialNoField, fatherNameField,
+    public JTextField studentNameField, registerNoField, serialNoField, fatherNameField,
             dobField, dobWordsField, nationalityField, religionField, casteField, 
             genderField, admissionDateField, courseField, gamesField, nccField, 
             feeConcessionField, resultField, leavingDateField, classLeavingField, 
@@ -753,94 +768,136 @@ public class TransferCertificateForm extends JFrame {
         }
     }
 
-    private void generatePDFSilently(String studentName) {
+   private void generatePDFSilently(String fileName) {
+    try {
+        Document document = new Document(PageSize.A4, 40, 40, 40, 40);
+        PdfWriter.getInstance(document, new FileOutputStream(fileName));
+        document.open();
+
+        // --- Add Logo ---
         try {
-            Document doc = new Document(PageSize.A4, 40, 40, 40, 40);
-            String filename = "batch_print/" + studentName.replaceAll("[^a-zA-Z0-9]", "_") + "_TC.pdf";
-            
-            // Create directory if it doesn't exist
-            new File("batch_print").mkdirs();
-            
-            PdfWriter.getInstance(doc, new FileOutputStream(filename));
-            doc.open();
+            InputStream imgStream = getClass().getResourceAsStream("/top.png");
+            if (imgStream != null) {
+                java.awt.image.BufferedImage bufferedImage = javax.imageio.ImageIO.read(imgStream);
+                java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                javax.imageio.ImageIO.write(bufferedImage, "png", baos);
+                baos.flush();
+                byte[] imageBytes = baos.toByteArray();
+                baos.close();
 
-            // Try to add logo
-            try {
-                Image logo = Image.getInstance("C:\\Users\\ins1f\\Downloads\\CollegeTransferCertificate\\top.png");
+                Image logo = Image.getInstance(imageBytes);
+                logo.setAlignment(Image.ALIGN_CENTER);
                 logo.scaleToFit(500, 100);
-                logo.setAlignment(Element.ALIGN_CENTER);
-                doc.add(logo);
-            } catch (Exception e) {
-                System.out.println("Logo image not found: " + e.getMessage());
+                document.add(logo);
+            } else {
+                System.out.println("Logo not found, continuing without header image");
             }
-
-            Font font = FontFactory.getFont(FontFactory.HELVETICA, 10);
-            Font bold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
-            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
-
-            Paragraph title = new Paragraph("TRANSFER CERTIFICATE", titleFont);
-            title.setAlignment(Element.ALIGN_CENTER);
-            doc.add(title);
-            doc.add(new Paragraph("\n"));
-            
-            // Header with Reg No and Serial No
-            Paragraph header = new Paragraph("Reg. No. : " + registerNoField.getText() + 
-                "                                                      Serial No : " + serialNoField.getText(), bold);
-            doc.add(header);
-            doc.add(new Paragraph("\n"));
-
-            // Create table for data
-            PdfPTable table = new PdfPTable(4);
-            table.setWidthPercentage(100);
-            table.setWidths(new float[]{0.6f, 5.5f, 0.3f, 5.0f});
-            table.setSpacingBefore(10f);
-
-            // Helper to create styled cells
-            java.util.function.BiFunction<String, Integer, PdfPCell> createCell = (text, alignment) -> {
-                PdfPCell cell = new PdfPCell(new Phrase(text, font));
-                cell.setBorder(Rectangle.NO_BORDER);
-                cell.setHorizontalAlignment(alignment);
-                cell.setVerticalAlignment(Element.ALIGN_TOP);
-                cell.setPaddingBottom(6f);
-                cell.setPaddingLeft(2f);
-                return cell;
-            };
-
-            // Add all rows
-            addTableRow(table, "1.", "Name of the Student", ":", studentNameField.getText(), createCell);
-            addTableRow(table, "2.", "Name of the Father / Guardian / Mother", ":", fatherNameField.getText(), createCell);
-            addTableRow(table, "3.", "Date of Birth as entered in the School Record (in figures)", ":", dobField.getText(), createCell);
-            addTableRow(table, "", "(in words)", ":", dobWordsField.getText(), createCell);
-            addTableRow(table, "4.", "Nationality, Religion & Caste", ":", 
-                nationalityField.getText() + " - " + religionField.getText() + " - " + casteField.getText(), createCell);
-            addTableRow(table, "5.", "Gender", ":", genderField.getText(), createCell);
-            addTableRow(table, "6.", "Date of Admission and Course in which admitted", ":", 
-                admissionDateField.getText() + " & " + courseField.getText(), createCell);
-            addTableRow(table, "7.", "Games played or extra-curricular activities in which the Student usually took part (mention achievement level there in)", ":", gamesField.getText(), createCell);
-            addTableRow(table, "8.", "Whether NCC Cadet / Scout & Guide", ":", nccField.getText(), createCell);
-            addTableRow(table, "9.", "Any fee concession availed of if so, the nature of concession", ":", feeConcessionField.getText(), createCell);
-            addTableRow(table, "10.", "Anna University Annual examination last taken result with class", ":", resultField.getText(), createCell);
-            addTableRow(table, "11.", "Date on which the student left the college", ":", leavingDateField.getText(), createCell);
-            addTableRow(table, "12.", "Class in which the student was studying at the time of leaving the college", ":", classLeavingField.getText(), createCell);
-            addTableRow(table, "13.", "Whether qualified for promotion to the higher education", ":", qualifiedField.getText(), createCell);
-            addTableRow(table, "14.", "Reason for leaving the Institution", ":", reasonField.getText(), createCell);
-            addTableRow(table, "15.", "Date of issue of Transfer Certificate", ":", issueDateField.getText(), createCell);
-            addTableRow(table, "16.", "Student conduct and character", ":", conductField.getText(), createCell);
-            addTableRow(table, "17.", "Any other Remarks", ":", remarksField.getText(), createCell);
-            addTableRow(table, "", "", "", "UMIS No: " + umisField.getText(), createCell);
-
-            doc.add(table);
-            doc.add(new Paragraph("\n\n\n"));
-            
-            Paragraph principal = new Paragraph("PRINCIPAL", bold);
-            principal.setAlignment(Element.ALIGN_RIGHT);
-            doc.add(principal);
-
-            doc.close();
-        } catch (Exception e) {
-            System.err.println("PDF Generation Failed: " + e.getMessage());
+        } catch (Exception logoEx) {
+            System.out.println("Logo not found, continuing without header image");
         }
+
+        // --- Fonts ---
+        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
+        Font fieldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+        Font contentFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
+        Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
+
+        // --- Title ---
+        Paragraph titleBorder = new Paragraph("TRANSFER CERTIFICATE", titleFont);
+        titleBorder.setAlignment(Element.ALIGN_CENTER);
+        titleBorder.setSpacingBefore(10);
+        titleBorder.setSpacingAfter(15);
+        document.add(titleBorder);
+
+        document.add(new Paragraph(" ", contentFont)); // spacing
+
+        // --- Reg No & Serial No ---
+        Paragraph regSerial = new Paragraph();
+        regSerial.add(new Chunk("Reg.No.     : ", fieldFont));
+        regSerial.add(new Chunk(registerNoField.getText(), contentFont));
+        regSerial.add(new Chunk("                                                           ", contentFont));
+        regSerial.add(new Chunk("Serial No :", fieldFont));
+        regSerial.add(new Chunk("  " + serialNoField.getText(), contentFont));
+        regSerial.setSpacingAfter(15);
+        document.add(regSerial);
+
+        // --- Content Fields ---
+        addLinearField(document, "1. Name of the Student", studentNameField.getText(), fieldFont, contentFont);
+        addLinearField(document, "2. Name of the Father / Guardian / Mother", fatherNameField.getText(), fieldFont, contentFont);
+
+        String dobText = dobField.getText();
+        if (!dobWordsField.getText().isEmpty()) {
+            dobText += "\n    " + dobWordsField.getText();
+        }
+        addLinearField(document, "3. Date of Birth as entered in the School Record (in words)", dobText, fieldFont, contentFont);
+
+        String nationalityInfo = nationalityField.getText() + " - " + religionField.getText() + " - " + casteField.getText();
+        addLinearField(document, "4. Nationality, Religion & Caste", nationalityInfo, fieldFont, contentFont);
+
+        addLinearField(document, "5. Gender", genderField.getText(), fieldFont, contentFont);
+
+        String admissionInfo = admissionDateField.getText() + " & " + courseField.getText();
+        addLinearField(document, "6. Date of Admission and Course in which admitted", admissionInfo, fieldFont, contentFont);
+
+        addLinearField(document, "7. Games played or extra-curricular activities", gamesField.getText(), fieldFont, contentFont);
+        addLinearField(document, "8. Whether NCC Cadet / Scout & Guide", nccField.getText(), fieldFont, contentFont);
+        addLinearField(document, "9. Any fee concession availed", feeConcessionField.getText(), fieldFont, contentFont);
+        addLinearField(document, "10. Annual examination last taken result with class", resultField.getText(), fieldFont, contentFont);
+        addLinearField(document, "11. Date on which the student left the college", leavingDateField.getText(), fieldFont, contentFont);
+        addLinearField(document, "12. Class in which the student was studying", classLeavingField.getText(), fieldFont, contentFont);
+        addLinearField(document, "13. Whether qualified for promotion", qualifiedField.getText(), fieldFont, contentFont);
+        addLinearField(document, "14. Reason for leaving the Institution", reasonField.getText(), fieldFont, contentFont);
+        addLinearField(document, "15. Date of issue of Transfer Certificate", issueDateField.getText(), fieldFont, contentFont);
+        addLinearField(document, "16. Student conduct and character", conductField.getText(), fieldFont, contentFont);
+        addLinearField(document, "17. Any other Remarks", remarksField.getText(), fieldFont, contentFont);
+
+        document.add(new Paragraph(" ", contentFont)); // spacing
+
+        // --- UMIS No ---
+        Paragraph umisSection = new Paragraph();
+        umisSection.add(new Chunk("                                                                                              ", contentFont));
+        umisSection.add(new Chunk("UMIS NO: ", fieldFont));
+        umisSection.add(new Chunk(umisField.getText(), contentFont));
+        umisSection.setSpacingAfter(30);
+        document.add(umisSection);
+
+        // --- Signature ---
+        Paragraph principalSignature = new Paragraph("PRINCIPAL", headerFont);
+        principalSignature.setAlignment(Element.ALIGN_RIGHT);
+        principalSignature.setSpacingBefore(20);
+        document.add(principalSignature);
+
+        document.close();
+
+        updateStatus("PDF silently generated: " + fileName);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        updateStatus("Error generating PDF silently: " + e.getMessage());
     }
+}
+// Helper method to add linear fields
+private void addLinearField(Document document, String label, String value, Font labelFont, Font valueFont) throws DocumentException {
+    Paragraph field = new Paragraph();
+    field.add(new Chunk(label, labelFont));
+    
+    if (value != null && !value.trim().isEmpty()) {
+        field.add(new Chunk(" : ", labelFont));
+        field.add(new Chunk(value, valueFont));
+    } else {
+        field.add(new Chunk(" : ", labelFont));
+    }
+    
+    field.setSpacingAfter(8);
+    field.setIndentationLeft(0);
+    document.add(field);
+}
+private void updateStatus(String message) {
+    System.out.println(message); // Just print to console
+}
+
+
+    
 
     private void addTableRow(PdfPTable table, String num, String label, String colon, String value, 
             java.util.function.BiFunction<String, Integer, PdfPCell> createCell) {
@@ -1206,100 +1263,124 @@ public class TransferCertificateForm extends JFrame {
         return sb.toString().trim();
     }
 
-    private void generatePDF() {
-        if (studentNameField.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter student name before generating PDF.");
-            return;
-        }
-        
+// =================== Generate PDF with Dialog ===================
+private void generatePDF() {
+    try {
+        Document document = new Document(PageSize.A4, 40, 40, 40, 40);
+        String fileName = "TC_" + registerNoField.getText() + ".pdf";
+
+        PdfWriter.getInstance(document, new FileOutputStream(fileName));
+        document.open();
+
+        // --- Add Logo ---
         try {
-            Document doc = new Document(PageSize.A4, 40, 40, 40, 40);
-            String filename = studentNameField.getText().replaceAll("[^a-zA-Z0-9]", "_") + "_TC.pdf";
-            PdfWriter.getInstance(doc, new FileOutputStream(filename));
-            doc.open();
+            InputStream imgStream = getClass().getResourceAsStream("/top.png");
+            if (imgStream != null) {
+                java.awt.image.BufferedImage bufferedImage = javax.imageio.ImageIO.read(imgStream);
+                java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                javax.imageio.ImageIO.write(bufferedImage, "png", baos);
+                baos.flush();
+                byte[] imageBytes = baos.toByteArray();
+                baos.close();
 
-            // Try to add logo
-            try {
-                Image logo = Image.getInstance("C:\\Users\\ins1f\\Downloads\\CollegeTransferCertificate\\top.png");
+                Image logo = Image.getInstance(imageBytes);
+                logo.setAlignment(Image.ALIGN_CENTER);
                 logo.scaleToFit(500, 100);
-                logo.setAlignment(Element.ALIGN_CENTER);
-                doc.add(logo);
-            } catch (Exception e) {
-                System.out.println("Logo image not found: " + e.getMessage());
+                document.add(logo);
+            } else {
+                System.out.println("Logo not found, continuing without header image");
             }
-
-            Font font = FontFactory.getFont(FontFactory.HELVETICA, 10);
-            Font bold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
-            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
-
-            Paragraph title = new Paragraph("TRANSFER CERTIFICATE", titleFont);
-            title.setAlignment(Element.ALIGN_CENTER);
-            doc.add(title);
-            doc.add(new Paragraph("\n"));
-            
-            // Header with Reg No and Serial No
-            Paragraph header = new Paragraph("Reg. No. : " + registerNoField.getText() + 
-                "                                                      Serial No : " + serialNoField.getText(), bold);
-            doc.add(header);
-            doc.add(new Paragraph("\n"));
-
-            // Create table with all the data (same as in original code)
-            PdfPTable table = new PdfPTable(4);
-            table.setWidthPercentage(100);
-            table.setWidths(new float[]{0.6f, 5.5f, 0.3f, 5.0f});
-            table.setSpacingBefore(10f);
-
-            // Helper to create styled cells
-            java.util.function.BiFunction<String, Integer, PdfPCell> createCell = (text, alignment) -> {
-                PdfPCell cell = new PdfPCell(new Phrase(text, font));
-                cell.setBorder(Rectangle.NO_BORDER);
-                cell.setHorizontalAlignment(alignment);
-                cell.setVerticalAlignment(Element.ALIGN_TOP);
-                cell.setPaddingBottom(6f);
-                cell.setPaddingLeft(2f);
-                return cell;
-            };
-
-            // Add all the table rows (same as original)
-            addTableRow(table, "1.", "Name of the Student", ":", studentNameField.getText(), createCell);
-            addTableRow(table, "2.", "Name of the Father / Guardian / Mother", ":", fatherNameField.getText(), createCell);
-            addTableRow(table, "3.", "Date of Birth as entered in the School Record (in figures)", ":", dobField.getText(), createCell);
-            addTableRow(table, "", "(in words)", ":", dobWordsField.getText(), createCell);
-            addTableRow(table, "4.", "Nationality, Religion & Caste", ":", 
-                nationalityField.getText() + " - " + religionField.getText() + " - " + casteField.getText(), createCell);
-            addTableRow(table, "5.", "Gender", ":", genderField.getText(), createCell);
-            addTableRow(table, "6.", "Date of Admission and Course in which admitted", ":", 
-                admissionDateField.getText() + " & " + courseField.getText(), createCell);
-            addTableRow(table, "7.", "Games played or extra-curricular activities in which the Student usually took part (mention achievement level there in)", ":", gamesField.getText(), createCell);
-            addTableRow(table, "8.", "Whether NCC Cadet / Scout & Guide", ":", nccField.getText(), createCell);
-            addTableRow(table, "9.", "Any fee concession availed of if so, the nature of concession", ":", feeConcessionField.getText(), createCell);
-            addTableRow(table, "10.", "Anna University Annual examination last taken result with class", ":", resultField.getText(), createCell);
-            addTableRow(table, "11.", "Date on which the student left the college", ":", leavingDateField.getText(), createCell);
-            addTableRow(table, "12.", "Class in which the student was studying at the time of leaving the college", ":", classLeavingField.getText(), createCell);
-            addTableRow(table, "13.", "Whether qualified for promotion to the higher education", ":", qualifiedField.getText(), createCell);
-            addTableRow(table, "14.", "Reason for leaving the Institution", ":", reasonField.getText(), createCell);
-            addTableRow(table, "15.", "Date of issue of Transfer Certificate", ":", issueDateField.getText(), createCell);
-            addTableRow(table, "16.", "Student conduct and character", ":", conductField.getText(), createCell);
-            addTableRow(table, "17.", "Any other Remarks", ":", remarksField.getText(), createCell);
-            addTableRow(table, "", "", "", "UMIS No: " + umisField.getText(), createCell);
-        
-
-
-            doc.add(table);
-            doc.add(new Paragraph("\n\n\n"));
-            
-            Paragraph principal = new Paragraph("PRINCIPAL", bold);
-            principal.setAlignment(Element.ALIGN_RIGHT);
-            doc.add(principal);
-
-            doc.close();
-            JOptionPane.showMessageDialog(this, "PDF Generated successfully: " + filename);
-            showNotification("PDF generated: " + filename);
-                    } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "PDF Generation Failed: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
+        } catch (Exception logoEx) {
+            System.out.println("Logo not found, continuing without header image");
         }
+
+        // --- Fonts ---
+        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
+        Font fieldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+        Font contentFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
+        Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
+
+        // --- Title ---
+        Paragraph titleBorder = new Paragraph("TRANSFER CERTIFICATE", titleFont);
+        titleBorder.setAlignment(Element.ALIGN_CENTER);
+        titleBorder.setSpacingBefore(10);
+        titleBorder.setSpacingAfter(15);
+        document.add(titleBorder);
+
+        document.add(new Paragraph(" ", contentFont));
+
+        // --- Reg No & Serial No ---
+        Paragraph regSerial = new Paragraph();
+        regSerial.add(new Chunk("Reg.No.     : ", fieldFont));
+        regSerial.add(new Chunk(registerNoField.getText(), contentFont));
+        regSerial.add(new Chunk("                                                           ", contentFont));
+        regSerial.add(new Chunk("Serial No :", fieldFont));
+        regSerial.add(new Chunk("  " + serialNoField.getText(), contentFont));
+        regSerial.setSpacingAfter(15);
+        document.add(regSerial);
+
+        // --- Content Fields ---
+        addLinearField(document, "1. Name of the Student", studentNameField.getText(), fieldFont, contentFont);
+        addLinearField(document, "2. Name of the Father / Guardian / Mother", fatherNameField.getText(), fieldFont, contentFont);
+
+        String dobText = dobField.getText();
+        if (!dobWordsField.getText().isEmpty()) {
+            dobText += "\n    " + dobWordsField.getText();
+        }
+        addLinearField(document, "3. Date of Birth as entered in the School Record (in words)", dobText, fieldFont, contentFont);
+
+        String nationalityInfo = nationalityField.getText() + " - " + religionField.getText() + " - " + casteField.getText();
+        addLinearField(document, "4. Nationality, Religion & Caste", nationalityInfo, fieldFont, contentFont);
+
+        addLinearField(document, "5. Gender", genderField.getText(), fieldFont, contentFont);
+
+        String admissionInfo = admissionDateField.getText() + " & " + courseField.getText();
+        addLinearField(document, "6. Date of Admission and Course in which admitted", admissionInfo, fieldFont, contentFont);
+
+        addLinearField(document, "7. Games played or extra-curricular activities", gamesField.getText(), fieldFont, contentFont);
+        addLinearField(document, "8. Whether NCC Cadet / Scout & Guide", nccField.getText(), fieldFont, contentFont);
+        addLinearField(document, "9. Any fee concession availed", feeConcessionField.getText(), fieldFont, contentFont);
+        addLinearField(document, "10. Annual examination last taken result with class", resultField.getText(), fieldFont, contentFont);
+        addLinearField(document, "11. Date on which the student left the college", leavingDateField.getText(), fieldFont, contentFont);
+        addLinearField(document, "12. Class in which the student was studying", classLeavingField.getText(), fieldFont, contentFont);
+        addLinearField(document, "13. Whether qualified for promotion", qualifiedField.getText(), fieldFont, contentFont);
+        addLinearField(document, "14. Reason for leaving the Institution", reasonField.getText(), fieldFont, contentFont);
+        addLinearField(document, "15. Date of issue of Transfer Certificate", issueDateField.getText(), fieldFont, contentFont);
+        addLinearField(document, "16. Student conduct and character", conductField.getText(), fieldFont, contentFont);
+        addLinearField(document, "17. Any other Remarks", remarksField.getText(), fieldFont, contentFont);
+
+        document.add(new Paragraph(" ", contentFont));
+
+        // --- UMIS No ---
+        Paragraph umisSection = new Paragraph();
+        umisSection.add(new Chunk("                                                                                              ", contentFont));
+        umisSection.add(new Chunk("UMIS NO: ", fieldFont));
+        umisSection.add(new Chunk(umisField.getText(), contentFont));
+        umisSection.setSpacingAfter(30);
+        document.add(umisSection);
+
+        // --- Signature ---
+        Paragraph principalSignature = new Paragraph("PRINCIPAL", headerFont);
+        principalSignature.setAlignment(Element.ALIGN_RIGHT);
+        principalSignature.setSpacingBefore(20);
+        document.add(principalSignature);
+
+        document.close();
+
+        JOptionPane.showMessageDialog(this,
+            "Transfer Certificate PDF generated successfully!\nSaved as: " + fileName,
+            "PDF Generated", JOptionPane.INFORMATION_MESSAGE);
+
+        updateStatus("PDF generated: " + fileName);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this,
+            "Error generating PDF: " + e.getMessage(),
+            "PDF Generation Error", JOptionPane.ERROR_MESSAGE);
     }
+}
+
 
     public static void main(String[] args) {
         try {

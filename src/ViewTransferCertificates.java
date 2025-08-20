@@ -1,3 +1,4 @@
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
@@ -19,6 +20,8 @@ import java.beans.PropertyChangeListener;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.Rectangle;
+import java.io.InputStream;
+
 
 public class ViewTransferCertificates extends JFrame {
     // Core components
@@ -758,123 +761,114 @@ PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(fileName
 document.open();
 
 // Fonts
-Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, BaseColor.BLACK);
+Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, BaseColor.BLACK);
 Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, BaseColor.BLACK);
 Font contentFont = FontFactory.getFont(FontFactory.HELVETICA, 12, BaseColor.BLACK);
 Font fieldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, BaseColor.BLACK);
 
-// Add logo if exists
-try {
-    Image logo = Image.getInstance("C:\\Users\\ins1f\\Downloads\\CollegeTransferCertificate\\top.png");
-    logo.setAlignment(Image.ALIGN_CENTER);
-    logo.scaleToFit(500, 100);
-    document.add(logo);
-} catch (Exception logoEx) {
-    // Logo not found, continue without it
-    System.out.println("Logo not found, continuing without header image");
-}
+    try {
+        InputStream imgStream = getClass().getResourceAsStream("/top.png");
+        if (imgStream != null) {
+            java.awt.image.BufferedImage bufferedImage = javax.imageio.ImageIO.read(imgStream);
+            java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+            javax.imageio.ImageIO.write(bufferedImage, "png", baos);
+            baos.flush();
+            byte[] imageBytes = baos.toByteArray();
+            baos.close();
 
-// Header with border
-Paragraph titleBorder = new Paragraph("TRANSFER CERTIFICATE", titleFont);
-titleBorder.setAlignment(Element.ALIGN_CENTER);
-titleBorder.setSpacingBefore(10);
-titleBorder.setSpacingAfter(15);
-
-// Create a bordered rectangle for title
-PdfPTable titleTable = new PdfPTable(1);
-titleTable.setWidthPercentage(40);
-titleTable.setHorizontalAlignment(Element.ALIGN_CENTER);
-PdfPCell titleCell = new PdfPCell(titleBorder);
-titleCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-titleCell.setPadding(8);
-titleCell.setBorderWidth(2);
-titleTable.addCell(titleCell);
-document.add(titleTable);
-
-document.add(new Paragraph(" ", contentFont)); // Spacing
-
-// Reg No and Serial No section
-Paragraph regSerial = new Paragraph();
-regSerial.add(new Chunk("Reg.No.     : ", fieldFont));
-regSerial.add(new Chunk("9103224013010", contentFont));
-regSerial.add(new Chunk("                                                           ", contentFont));
-regSerial.add(new Chunk("Serial No :", fieldFont));
-regSerial.add(new Chunk("  85", contentFont));
-regSerial.setSpacingAfter(15);
-document.add(regSerial);
-
-// Content sections - Linear format
-addLinearField(document, "1. Name of the Student", studentName, fieldFont, contentFont);
-
-addLinearField(document, "2. Name of the Father / Guardian / Mother", fatherName, fieldFont, contentFont);
-
-String dobText = dateOfBirth;
-if (!dobWords.isEmpty()) {
-    dobText += "\n    " + dobWords;
-}
-addLinearField(document, "3. Date of Birth as entered in the School Record (in words)", dobText, fieldFont, contentFont);
-
-String nationalityInfo = nationality + " - " + caste + " - " + religion;
-addLinearField(document, "4. Nationality, Religion & Caste", nationalityInfo, fieldFont, contentFont);
-
-addLinearField(document, "5. Gender", gender, fieldFont, contentFont);
-
-String admissionInfo = admissionDate + " & " + course;
-addLinearField(document, "6. Date of Admission and Course in which admitted", admissionInfo, fieldFont, contentFont);
-
-addLinearField(document, "7. Games played or extra-curricular activities in which the Student usually took part (mention achievement level there in)", gamesActivities, fieldFont, contentFont);
-
-addLinearField(document, "8. Whether NCC Cadet / Scout & Guide", "NIL", fieldFont, contentFont);
-
-addLinearField(document, "9. Any fee concession availed of if so, the nature of concession", feeConcession.isEmpty() ? "PMSS" : feeConcession, fieldFont, contentFont);
-
-addLinearField(document, "10. Anna University Annual examination last taken result with class", lastExamResult, fieldFont, contentFont);
-
-addLinearField(document, "11. Date on which the student left the college", leavingDate, fieldFont, contentFont);
-
-addLinearField(document, "12. Class in which the student was studying at the time of leaving the college", classAtLeaving, fieldFont, contentFont);
-
-addLinearField(document, "13. Whether qualified for promotion to the higher education", qualifiedPromotion, fieldFont, contentFont);
-
-addLinearField(document, "14. Reason for leaving the Institution", reasonLeaving, fieldFont, contentFont);
-
-addLinearField(document, "15. Date of issue of Transfer Certificate", issueDate, fieldFont, contentFont);
-
-addLinearField(document, "16. Student conduct and character", conductCharacter, fieldFont, contentFont);
-
-addLinearField(document, "17. Any other Remarks", otherRemarks, fieldFont, contentFont);
-
-document.add(new Paragraph(" ", contentFont)); // Spacing
-
-// UMIS No - right aligned
-Paragraph umisSection = new Paragraph();
-umisSection.add(new Chunk("                                                                                              ", contentFont));
-umisSection.add(new Chunk("UMIS NO: ", fieldFont));
-umisSection.add(new Chunk(umisNo, contentFont));
-umisSection.setSpacingAfter(30);
-document.add(umisSection);
-
-// Signature section - right aligned
-Paragraph principalSignature = new Paragraph("PRINCIPAL", headerFont);
-principalSignature.setAlignment(Element.ALIGN_RIGHT);
-principalSignature.setSpacingBefore(20);
-document.add(principalSignature);
-
-document.close();
-
-        JOptionPane.showMessageDialog(this, 
-            "Transfer Certificate PDF generated successfully!\nSaved as: " + fileName, 
-            "PDF Generated", JOptionPane.INFORMATION_MESSAGE);
-        
-        updateStatus("PDF generated: " + fileName);
-
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, 
-            "Error generating PDF: " + e.getMessage(), 
-            "PDF Generation Error", JOptionPane.ERROR_MESSAGE);
+            Image logo = Image.getInstance(imageBytes);
+            logo.setAlignment(Image.ALIGN_CENTER);
+            logo.scaleToFit(500, 100);
+            document.add(logo);
+        } else {
+            System.out.println("Logo not found, continuing without header image");
+        }
+    } catch (Exception logoEx) {
+        System.out.println("Logo not found, continuing without header image");
     }
+
+    // Header with border
+    Paragraph titleBorder = new Paragraph("TRANSFER CERTIFICATE", titleFont);
+    titleBorder.setAlignment(Element.ALIGN_CENTER);
+    titleBorder.setSpacingBefore(10);
+    titleBorder.setSpacingAfter(15);
+    document.add(titleBorder);
+
+    document.add(new Paragraph(" ", contentFont)); // spacing
+
+    // Reg No and Serial No section
+    Paragraph regSerial = new Paragraph();
+    regSerial.add(new Chunk("Reg.No.     : ", fieldFont));
+    regSerial.add(new Chunk(registerNo, contentFont));
+    regSerial.add(new Chunk("                                                           ", contentFont));
+    regSerial.add(new Chunk("Serial No :", fieldFont));
+    regSerial.add(new Chunk("  " + serialNo, contentFont));
+    regSerial.setSpacingAfter(15);
+    document.add(regSerial);
+
+    // Content sections - Linear format
+    addLinearField(document, "1. Name of the Student", studentName, fieldFont, contentFont);
+    addLinearField(document, "2. Name of the Father / Guardian / Mother", fatherName, fieldFont, contentFont);
+
+    String dobText = dateOfBirth;
+    if (!dobWords.isEmpty()) {
+        dobText += "\n    " + dobWords;
+    }
+    addLinearField(document, "3. Date of Birth as entered in the School Record (in words)", dobText, fieldFont, contentFont);
+
+    String nationalityInfo = nationality + " - " + religion + " - " + caste;
+    addLinearField(document, "4. Nationality, Religion & Caste", nationalityInfo, fieldFont, contentFont);
+
+    addLinearField(document, "5. Gender", gender, fieldFont, contentFont);
+
+    String admissionInfo = admissionDate + " & " + course;
+    addLinearField(document, "6. Date of Admission and Course in which admitted", admissionInfo, fieldFont, contentFont);
+
+    addLinearField(document, "7. Games played or extra-curricular activities in which the Student usually took part (mention achievement level there in)", gamesActivities, fieldFont, contentFont);
+    addLinearField(document, "8. Whether NCC Cadet / Scout & Guide", "NIL", fieldFont, contentFont);
+
+    addLinearField(document, "9. Any fee concession availed of if so, the nature of concession", feeConcession, fieldFont, contentFont);
+    addLinearField(document, "10. Anna University Annual examination last taken result with class", lastExamResult, fieldFont, contentFont);
+    addLinearField(document, "11. Date on which the student left the college", leavingDate, fieldFont, contentFont);
+    addLinearField(document, "12. Class in which the student was studying at the time of leaving the college", classAtLeaving, fieldFont, contentFont);
+    addLinearField(document, "13. Whether qualified for promotion to the higher education", qualifiedPromotion, fieldFont, contentFont);
+    addLinearField(document, "14. Reason for leaving the Institution", reasonLeaving, fieldFont, contentFont);
+    addLinearField(document, "15. Date of issue of Transfer Certificate", issueDate, fieldFont, contentFont);
+    addLinearField(document, "16. Student conduct and character", conductCharacter, fieldFont, contentFont);
+    addLinearField(document, "17. Any other Remarks", otherRemarks, fieldFont, contentFont);
+
+    document.add(new Paragraph(" ", contentFont)); // spacing
+
+    // UMIS No - right aligned
+    Paragraph umisSection = new Paragraph();
+    umisSection.add(new Chunk("                                                                                              ", contentFont));
+    umisSection.add(new Chunk("UMIS NO: ", fieldFont));
+    umisSection.add(new Chunk(umisNo, contentFont));
+    umisSection.setSpacingAfter(30);
+    document.add(umisSection);
+
+    // Signature section
+    Paragraph principalSignature = new Paragraph("PRINCIPAL", headerFont);
+    principalSignature.setAlignment(Element.ALIGN_RIGHT);
+    principalSignature.setSpacingBefore(20);
+    document.add(principalSignature);
+
+    document.close();
+
+    JOptionPane.showMessageDialog(this,
+        "Transfer Certificate PDF generated successfully!\nSaved as: " + fileName,
+        "PDF Generated", JOptionPane.INFORMATION_MESSAGE);
+
+    updateStatus("PDF generated: " + fileName);
+
+} catch (Exception e) {
+    e.printStackTrace();
+    JOptionPane.showMessageDialog(this,
+        "Error generating PDF: " + e.getMessage(),
+        "PDF Generation Error", JOptionPane.ERROR_MESSAGE);
 }
+    } // <-- Close generateSelectedPDF method
+
 
 // Helper method to safely convert object to string
 private String getString(Object obj) {
@@ -983,14 +977,68 @@ private void addLinearField(Document document, String label, String value, Font 
         JOptionPane.showMessageDialog(this, "Print Preview - To be implemented");
     }
     
+
     private void editSelectedRecord() {
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a record to edit.");
-            return;
-        }
-        JOptionPane.showMessageDialog(this, "Edit Record feature - To be implemented");
+    int selectedRow = table.getSelectedRow();
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a record to edit.");
+        return;
     }
+
+    // Reg No (unique) from table - assuming column 2 is register_no
+    String registerNo = table.getValueAt(selectedRow, 2).toString();
+
+    try (Connection conn = DriverManager.getConnection("jdbc:sqlite:college.db")) {
+        String sql = "SELECT * FROM transfer_certificates WHERE register_no = ?";
+        PreparedStatement ps = conn.prepareStatement(sql);
+        ps.setString(1, registerNo);
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            // Open Transfer Certificate Form
+            TransferCertificateForm form = new TransferCertificateForm();
+
+            // Fill fields in the form from DB
+            form.studentNameField.setText(rs.getString("student_name"));
+            form.registerNoField.setText(rs.getString("register_no"));
+            form.serialNoField.setText(rs.getString("serial_no"));
+            form.fatherNameField.setText(rs.getString("father_name"));
+            form.dobField.setText(rs.getString("dob"));
+            form.dobWordsField.setText(rs.getString("dob_words"));
+            form.nationalityField.setText(rs.getString("nationality"));
+            form.religionField.setText(rs.getString("religion"));
+            form.casteField.setText(rs.getString("caste"));
+            form.genderField.setText(rs.getString("gender"));
+            form.admissionDateField.setText(rs.getString("admission_date"));
+            form.courseField.setText(rs.getString("course"));
+            form.gamesField.setText(rs.getString("games"));
+            form.nccField.setText(rs.getString("ncc"));
+            form.feeConcessionField.setText(rs.getString("fee_concession"));
+            form.resultField.setText(rs.getString("result"));
+            form.leavingDateField.setText(rs.getString("leaving_date"));
+            form.classLeavingField.setText(rs.getString("class_leaving"));
+            form.qualifiedField.setText(rs.getString("qualified"));
+            form.reasonField.setText(rs.getString("reason"));
+            form.issueDateField.setText(rs.getString("issue_date"));
+            form.conductField.setText(rs.getString("conduct"));
+            form.remarksField.setText(rs.getString("remarks"));
+            form.umisField.setText(rs.getString("umis_no"));
+
+            // Show the form
+            form.setVisible(true);
+        } else {
+            JOptionPane.showMessageDialog(this, "Record not found in database!");
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this,
+                "Error loading record: " + e.getMessage(),
+                "Database Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
+
+
     
     private void duplicateRecord() {
         int selectedRow = table.getSelectedRow();
@@ -1102,7 +1150,7 @@ private void addLinearField(Document document, String label, String value, Font 
             PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(fileName));
             document.open();
 
-            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, BaseColor.BLACK);
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, BaseColor.BLACK);
             Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.BLACK);
             Font contentFont = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
             
