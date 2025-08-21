@@ -761,10 +761,10 @@ PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(fileName
 document.open();
 
 // Fonts
-Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, BaseColor.BLACK);
-Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, BaseColor.BLACK);
-Font contentFont = FontFactory.getFont(FontFactory.HELVETICA, 12, BaseColor.BLACK);
-Font fieldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, BaseColor.BLACK);
+  Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
+        Font fieldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+        Font contentFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
+        Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
 
     try {
         InputStream imgStream = getClass().getResourceAsStream("/top.png");
@@ -807,35 +807,35 @@ Font fieldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, BaseColor.B
     document.add(regSerial);
 
     // Content sections - Linear format
-    addLinearField(document, "1. Name of the Student", studentName, fieldFont, contentFont);
-    addLinearField(document, "2. Name of the Father / Guardian / Mother", fatherName, fieldFont, contentFont);
+    addTableField(document, "1. Name of the Student", studentName, fieldFont, contentFont);
+    addTableField(document, "2. Name of the Father / Guardian / Mother", fatherName, fieldFont, contentFont);
 
     String dobText = dateOfBirth;
     if (!dobWords.isEmpty()) {
         dobText += "\n    " + dobWords;
     }
-    addLinearField(document, "3. Date of Birth as entered in the School Record (in words)", dobText, fieldFont, contentFont);
+    addTableField(document, "3. Date of Birth as entered in the School Record (in words)", dobText, fieldFont, contentFont);
 
     String nationalityInfo = nationality + " - " + religion + " - " + caste;
-    addLinearField(document, "4. Nationality, Religion & Caste", nationalityInfo, fieldFont, contentFont);
+    addTableField(document, "4. Nationality, Religion & Caste", nationalityInfo, fieldFont, contentFont);
 
-    addLinearField(document, "5. Gender", gender, fieldFont, contentFont);
+    addTableField(document, "5. Gender", gender, fieldFont, contentFont);
 
     String admissionInfo = admissionDate + " & " + course;
-    addLinearField(document, "6. Date of Admission and Course in which admitted", admissionInfo, fieldFont, contentFont);
+    addTableField(document, "6. Date of Admission and Course in which admitted", admissionInfo, fieldFont, contentFont);
 
-    addLinearField(document, "7. Games played or extra-curricular activities in which the Student usually took part (mention achievement level there in)", gamesActivities, fieldFont, contentFont);
-    addLinearField(document, "8. Whether NCC Cadet / Scout & Guide", "NIL", fieldFont, contentFont);
+    addTableField(document, "7. Games played or extra-curricular activities in which the Student usually took part (mention achievement level there in)", gamesActivities, fieldFont, contentFont);
+    addTableField(document, "8. Whether NCC Cadet / Scout & Guide", "NIL", fieldFont, contentFont);
 
-    addLinearField(document, "9. Any fee concession availed of if so, the nature of concession", feeConcession, fieldFont, contentFont);
-    addLinearField(document, "10. Anna University Annual examination last taken result with class", lastExamResult, fieldFont, contentFont);
-    addLinearField(document, "11. Date on which the student left the college", leavingDate, fieldFont, contentFont);
-    addLinearField(document, "12. Class in which the student was studying at the time of leaving the college", classAtLeaving, fieldFont, contentFont);
-    addLinearField(document, "13. Whether qualified for promotion to the higher education", qualifiedPromotion, fieldFont, contentFont);
-    addLinearField(document, "14. Reason for leaving the Institution", reasonLeaving, fieldFont, contentFont);
-    addLinearField(document, "15. Date of issue of Transfer Certificate", issueDate, fieldFont, contentFont);
-    addLinearField(document, "16. Student conduct and character", conductCharacter, fieldFont, contentFont);
-    addLinearField(document, "17. Any other Remarks", otherRemarks, fieldFont, contentFont);
+    addTableField(document, "9. Any fee concession availed of if so, the nature of concession", feeConcession, fieldFont, contentFont);
+    addTableField(document, "10. Anna University Annual examination last taken result with class", lastExamResult, fieldFont, contentFont);
+    addTableField(document, "11. Date on which the student left the college", leavingDate, fieldFont, contentFont);
+    addTableField(document, "12. Class in which the student was studying at the time of leaving the college", classAtLeaving, fieldFont, contentFont);
+    addTableField(document, "13. Whether qualified for promotion to the higher education", qualifiedPromotion, fieldFont, contentFont);
+    addTableField(document, "14. Reason for leaving the Institution", reasonLeaving, fieldFont, contentFont);
+    addTableField(document, "15. Date of issue of Transfer Certificate", issueDate, fieldFont, contentFont);
+    addTableField(document, "16. Student conduct and character", conductCharacter, fieldFont, contentFont);
+    addTableField(document, "17. Any other Remarks", otherRemarks, fieldFont, contentFont);
 
     document.add(new Paragraph(" ", contentFont)); // spacing
 
@@ -876,21 +876,28 @@ private String getString(Object obj) {
 }
 
 // Helper method to add linear fields
-private void addLinearField(Document document, String label, String value, Font labelFont, Font valueFont) throws DocumentException {
-    Paragraph field = new Paragraph();
-    field.add(new Chunk(label, labelFont));
-    
-    if (value != null && !value.trim().isEmpty()) {
-        field.add(new Chunk(" : ", labelFont));
-        field.add(new Chunk(value, valueFont));
-    } else {
-        field.add(new Chunk(" : ", labelFont));
+ public static void addTableField(Document document, String question, String answer,
+                                     Font questionFont, Font answerFont) throws DocumentException {
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(100);
+        table.setWidths(new int[]{5, 5}); // 30% question, 70% answer
+        table.getDefaultCell().setBorder(Rectangle.NO_BORDER);
+
+        // Question cell
+        PdfPCell questionCell = new PdfPCell(new Phrase(question, questionFont));
+        questionCell.setBorder(Rectangle.NO_BORDER);
+        questionCell.setPadding(5);
+        table.addCell(questionCell);
+
+        // Answer cell
+        PdfPCell answerCell = new PdfPCell(new Phrase(answer, answerFont));
+        answerCell.setBorder(Rectangle.NO_BORDER);
+        answerCell.setPadding(5);
+        table.addCell(answerCell);
+
+        document.add(table);
     }
-    
-    field.setSpacingAfter(8);
-    field.setIndentationLeft(0);
-    document.add(field);
-}
+
 
     // View selected certificate details in a dialog
     private void viewSelectedCertificate() {

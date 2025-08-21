@@ -815,48 +815,48 @@ public class TransferCertificateForm extends JFrame {
         Paragraph regSerial = new Paragraph();
         regSerial.add(new Chunk("Reg.No.     : ", fieldFont));
         regSerial.add(new Chunk(registerNoField.getText(), contentFont));
-        regSerial.add(new Chunk("                                                           ", contentFont));
-        regSerial.add(new Chunk("Serial No :", fieldFont));
+        regSerial.add(new Chunk("                                                                                                     ", contentFont));
+        regSerial.add(new Chunk("                                                 Serial No :", fieldFont));
         regSerial.add(new Chunk("  " + serialNoField.getText(), contentFont));
-        regSerial.setSpacingAfter(15);
+        regSerial.setSpacingAfter(50);
         document.add(regSerial);
 
         // --- Content Fields ---
-        addLinearField(document, "1. Name of the Student", studentNameField.getText(), fieldFont, contentFont);
-        addLinearField(document, "2. Name of the Father / Guardian / Mother", fatherNameField.getText(), fieldFont, contentFont);
+        addTableField(document, "1. Name of the Student:", studentNameField.getText(), fieldFont, contentFont);
+        addTableField(document, "2. Name of the Father / Guardian / Mother:", fatherNameField.getText(), fieldFont, contentFont);
 
         String dobText = dobField.getText();
         if (!dobWordsField.getText().isEmpty()) {
             dobText += "\n    " + dobWordsField.getText();
         }
-        addLinearField(document, "3. Date of Birth as entered in the School Record (in words)", dobText, fieldFont, contentFont);
+        addTableField(document, "3. Date of Birth as entered in the School Record (in words):", dobText, fieldFont, contentFont);
 
         String nationalityInfo = nationalityField.getText() + " - " + religionField.getText() + " - " + casteField.getText();
-        addLinearField(document, "4. Nationality, Religion & Caste", nationalityInfo, fieldFont, contentFont);
+        addTableField(document, "4. Nationality, Religion & Caste:", nationalityInfo, fieldFont, contentFont);
 
-        addLinearField(document, "5. Gender", genderField.getText(), fieldFont, contentFont);
+        addTableField(document, "5. Gender:", genderField.getText(), fieldFont, contentFont);
 
         String admissionInfo = admissionDateField.getText() + " & " + courseField.getText();
-        addLinearField(document, "6. Date of Admission and Course in which admitted", admissionInfo, fieldFont, contentFont);
+        addTableField(document, "6. Date of Admission and Course in which admitted:", admissionInfo, fieldFont, contentFont);
 
-        addLinearField(document, "7. Games played or extra-curricular activities", gamesField.getText(), fieldFont, contentFont);
-        addLinearField(document, "8. Whether NCC Cadet / Scout & Guide", nccField.getText(), fieldFont, contentFont);
-        addLinearField(document, "9. Any fee concession availed", feeConcessionField.getText(), fieldFont, contentFont);
-        addLinearField(document, "10. Annual examination last taken result with class", resultField.getText(), fieldFont, contentFont);
-        addLinearField(document, "11. Date on which the student left the college", leavingDateField.getText(), fieldFont, contentFont);
-        addLinearField(document, "12. Class in which the student was studying", classLeavingField.getText(), fieldFont, contentFont);
-        addLinearField(document, "13. Whether qualified for promotion", qualifiedField.getText(), fieldFont, contentFont);
-        addLinearField(document, "14. Reason for leaving the Institution", reasonField.getText(), fieldFont, contentFont);
-        addLinearField(document, "15. Date of issue of Transfer Certificate", issueDateField.getText(), fieldFont, contentFont);
-        addLinearField(document, "16. Student conduct and character", conductField.getText(), fieldFont, contentFont);
-        addLinearField(document, "17. Any other Remarks", remarksField.getText(), fieldFont, contentFont);
+        addTableField(document, "7. Games played or extra-curricular activities:", gamesField.getText(), fieldFont, contentFont);
+        addTableField(document, "8. Whether NCC Cadet / Scout & Guide:", nccField.getText(), fieldFont, contentFont);
+        addTableField(document, "9. Any fee concession availed:", feeConcessionField.getText(), fieldFont, contentFont);
+        addTableField(document, "10. Annual examination last taken result with class:", resultField.getText(), fieldFont, contentFont);
+        addTableField(document, "11. Date on which the student left the college:", leavingDateField.getText(), fieldFont, contentFont);
+        addTableField(document, "12. Class in which the student was studying:", classLeavingField.getText(), fieldFont, contentFont);
+        addTableField(document, "13. Whether qualified for promotion:", qualifiedField.getText(), fieldFont, contentFont);
+        addTableField(document, "14. Reason for leaving the Institution:", reasonField.getText(), fieldFont, contentFont);
+        addTableField(document, "15. Date of issue of Transfer Certificate", issueDateField.getText(), fieldFont, contentFont);
+        addTableField(document, "16. Student conduct and character:", conductField.getText(), fieldFont, contentFont);
+        addTableField(document, "17. Any other Remarks:", remarksField.getText(), fieldFont, contentFont);
 
         document.add(new Paragraph(" ", contentFont)); // spacing
 
         // --- UMIS No ---
         Paragraph umisSection = new Paragraph();
         umisSection.add(new Chunk("                                                                                              ", contentFont));
-        umisSection.add(new Chunk("UMIS NO: ", fieldFont));
+        umisSection.add(new Chunk(":UMIS NO: ", fieldFont));
         umisSection.add(new Chunk(umisField.getText(), contentFont));
         umisSection.setSpacingAfter(30);
         document.add(umisSection);
@@ -876,25 +876,36 @@ public class TransferCertificateForm extends JFrame {
         updateStatus("Error generating PDF silently: " + e.getMessage());
     }
 }
-// Helper method to add linear fields
-private void addLinearField(Document document, String label, String value, Font labelFont, Font valueFont) throws DocumentException {
-    Paragraph field = new Paragraph();
-    field.add(new Chunk(label, labelFont));
-    
-    if (value != null && !value.trim().isEmpty()) {
-        field.add(new Chunk(" : ", labelFont));
-        field.add(new Chunk(value, valueFont));
-    } else {
-        field.add(new Chunk(" : ", labelFont));
-    }
-    
-    field.setSpacingAfter(8);
-    field.setIndentationLeft(0);
-    document.add(field);
-}
+
+// Add this method to fix the error
 private void updateStatus(String message) {
-    System.out.println(message); // Just print to console
+    statusLabel.setText(message);
+    Timer timer = new Timer(3000, e -> statusLabel.setText("Ready"));
+    timer.setRepeats(false);
+    timer.start();
 }
+// Helper method to add linear fields
+ public static void addTableField(Document document, String question, String answer,
+                                     Font questionFont, Font answerFont) throws DocumentException {
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(100);
+        table.setWidths(new int[]{5, 5}); // 30% question, 70% answer
+        table.getDefaultCell().setBorder(Rectangle.NO_BORDER);
+
+        // Question cell
+        PdfPCell questionCell = new PdfPCell(new Phrase(question, questionFont));
+        questionCell.setBorder(Rectangle.NO_BORDER);
+        questionCell.setPadding(5);
+        table.addCell(questionCell);
+
+        // Answer cell
+        PdfPCell answerCell = new PdfPCell(new Phrase(answer, answerFont));
+        answerCell.setBorder(Rectangle.NO_BORDER);
+        answerCell.setPadding(5);
+        table.addCell(answerCell);
+
+        document.add(table);
+    }
 
 
     
@@ -1320,34 +1331,34 @@ private void generatePDF() {
         document.add(regSerial);
 
         // --- Content Fields ---
-        addLinearField(document, "1. Name of the Student", studentNameField.getText(), fieldFont, contentFont);
-        addLinearField(document, "2. Name of the Father / Guardian / Mother", fatherNameField.getText(), fieldFont, contentFont);
+        addTableField(document, "1. Name of the Student", studentNameField.getText(), fieldFont, contentFont);
+        addTableField(document, "2. Name of the Father / Guardian / Mother", fatherNameField.getText(), fieldFont, contentFont);
 
         String dobText = dobField.getText();
         if (!dobWordsField.getText().isEmpty()) {
             dobText += "\n    " + dobWordsField.getText();
         }
-        addLinearField(document, "3. Date of Birth as entered in the School Record (in words)", dobText, fieldFont, contentFont);
+        addTableField(document, "3. Date of Birth as entered in the School Record (in words)", dobText, fieldFont, contentFont);
 
         String nationalityInfo = nationalityField.getText() + " - " + religionField.getText() + " - " + casteField.getText();
-        addLinearField(document, "4. Nationality, Religion & Caste", nationalityInfo, fieldFont, contentFont);
+        addTableField(document, "4. Nationality, Religion & Caste", nationalityInfo, fieldFont, contentFont);
 
-        addLinearField(document, "5. Gender", genderField.getText(), fieldFont, contentFont);
+        addTableField(document, "5. Gender", genderField.getText(), fieldFont, contentFont);
 
         String admissionInfo = admissionDateField.getText() + " & " + courseField.getText();
-        addLinearField(document, "6. Date of Admission and Course in which admitted", admissionInfo, fieldFont, contentFont);
+        addTableField(document, "6. Date of Admission and Course in which admitted", admissionInfo, fieldFont, contentFont);
 
-        addLinearField(document, "7. Games played or extra-curricular activities", gamesField.getText(), fieldFont, contentFont);
-        addLinearField(document, "8. Whether NCC Cadet / Scout & Guide", nccField.getText(), fieldFont, contentFont);
-        addLinearField(document, "9. Any fee concession availed", feeConcessionField.getText(), fieldFont, contentFont);
-        addLinearField(document, "10. Annual examination last taken result with class", resultField.getText(), fieldFont, contentFont);
-        addLinearField(document, "11. Date on which the student left the college", leavingDateField.getText(), fieldFont, contentFont);
-        addLinearField(document, "12. Class in which the student was studying", classLeavingField.getText(), fieldFont, contentFont);
-        addLinearField(document, "13. Whether qualified for promotion", qualifiedField.getText(), fieldFont, contentFont);
-        addLinearField(document, "14. Reason for leaving the Institution", reasonField.getText(), fieldFont, contentFont);
-        addLinearField(document, "15. Date of issue of Transfer Certificate", issueDateField.getText(), fieldFont, contentFont);
-        addLinearField(document, "16. Student conduct and character", conductField.getText(), fieldFont, contentFont);
-        addLinearField(document, "17. Any other Remarks", remarksField.getText(), fieldFont, contentFont);
+        addTableField(document, "7. Games played or extra-curricular activities", gamesField.getText(), fieldFont, contentFont);
+        addTableField(document, "8. Whether NCC Cadet / Scout & Guide", nccField.getText(), fieldFont, contentFont);
+        addTableField(document, "9. Any fee concession availed", feeConcessionField.getText(), fieldFont, contentFont);
+        addTableField(document, "10. Annual examination last taken result with class", resultField.getText(), fieldFont, contentFont);
+        addTableField(document, "11. Date on which the student left the college", leavingDateField.getText(), fieldFont, contentFont);
+        addTableField(document, "12. Class in which the student was studying", classLeavingField.getText(), fieldFont, contentFont);
+        addTableField(document, "13. Whether qualified for promotion", qualifiedField.getText(), fieldFont, contentFont);
+        addTableField(document, "14. Reason for leaving the Institution", reasonField.getText(), fieldFont, contentFont);
+        addTableField(document, "15. Date of issue of Transfer Certificate", issueDateField.getText(), fieldFont, contentFont);
+        addTableField(document, "16. Student conduct and character", conductField.getText(), fieldFont, contentFont);
+        addTableField(document, "17. Any other Remarks", remarksField.getText(), fieldFont, contentFont);
 
         document.add(new Paragraph(" ", contentFont));
 
